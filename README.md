@@ -33,3 +33,8 @@ exemplars from the fine-tuned DPR model are considerably more empathetic, divers
 not always semantically similar to the references, although they are stylistically plausible and relevant with respect to the context.
 
 ![Alt text](compare4.png?raw=true "Compare4")
+
+# Citation
+
+Majumder, Navonil, Deepanway Ghosal, Devamanyu Hazarika, Alexander Gelbukh, Rada Mihalcea and Soujanya Poria. “Exemplars-guided Empathetic Response Generation Controlled by the Elements of Human Communication.” ArXiv abs/2106.11791 (2021).
+
