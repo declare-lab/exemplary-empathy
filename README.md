@@ -27,3 +27,9 @@ Comparison of responses with and without DPR exemplars.
 Comparison of responses with and without empathetic losses.
 
 ![Alt text](compare3.png?raw=true "Compare3")
+
+Top exemplars from the DPR model fine-tuned on Empathetic Dialogs, and the original pre-trained DPR checkpoint without any further training. The
+exemplars from the fine-tuned DPR model are considerably more empathetic, diverse and contextually relevant. Notably, exemplars from the fine-tuned DPR are
+not always semantically similar to the references, although they are stylistically plausible and relevant with respect to the context.
+
+![Alt text](compare4.png?raw=true "Compare4")
