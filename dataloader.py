@@ -97,7 +97,7 @@ class EmpatheticDialogues(Dataset):
         dat = pd.DataFrame(data)
         return [dat[i].tolist() for i in dat]
 
-def data_loader(filename, batch_size, shuffle, cache="./.cache"):
+def MainDataLoader(filename, batch_size, shuffle, cache="./.cache"):
     dataset = EmpatheticDialogues(filename, cache=cache)
     loader = DataLoader(dataset, shuffle=shuffle, batch_size=batch_size, collate_fn=dataset.collate_fn)
     return loader
