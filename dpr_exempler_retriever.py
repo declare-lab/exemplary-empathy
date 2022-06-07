@@ -9,7 +9,7 @@ def preprocess(text):
     return text.replace("_comma_", ",")
 
 def load_df(split):
-    data = pd.read_csv("github/data/empathetic_dialogues/original/" + split + ".csv", quoting=3).drop(columns=["junk"])
+    data = pd.read_csv("data/empathetic_dialogues/original/" + split + ".csv", quoting=3).drop(columns=["junk"])
     data["utterance"] = data["utterance"].apply(lambda x: preprocess(x))
     history = []
     conv_ids = list(dict.fromkeys(data["conv_id"]))
@@ -102,8 +102,8 @@ if __name__ == "__main__":
     train_dpr = compute_exemplers(train, train_query)
 
     # Save
-    test_dpr.to_csv("github/data/empathetic_dialogues/original/test_dpr.csv")
-    valid_dpr.to_csv("github/data/empathetic_dialogues/original/valid_dpr.csv")
-    train_dpr.to_csv("github/data/empathetic_dialogues/original/train_dpr.csv")
+    test_dpr.to_csv("data/empathetic_dialogues/original/test_dpr.csv")
+    valid_dpr.to_csv("data/empathetic_dialogues/original/valid_dpr.csv")
+    train_dpr.to_csv("data/empathetic_dialogues/original/train_dpr.csv")
     print ("Done.")
 
