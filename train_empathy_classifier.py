@@ -19,7 +19,7 @@ transformers.logging.set_verbosity_error()
 def configure_dataloaders(dimension, batch_size):
     "Prepare dataloaders"
     train_loader = ClassificationLoader("data/empathy_mental_health/" + dimension + "_train.csv", batch_size, shuffle=True)
-    valid_loader = ClassificationLoader("data/empathy_mental_health/" + dimension + "_valid.csv", batch_size, shuffle=True)
+    valid_loader = ClassificationLoader("data/empathy_mental_health/" + dimension + "_valid.csv", batch_size, shuffle=False)
     return train_loader, valid_loader
 
 def configure_transformer_optimizer(model, args):

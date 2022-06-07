@@ -16,8 +16,8 @@ from sklearn.metrics import f1_score, accuracy_score
 def configure_dataloaders(batch_size):
     "Prepare dataloaders"
     train_loader = RegressionLoader("data/empathetic_dialogues/train_vader.csv", batch_size, shuffle=True)
-    valid_loader = RegressionLoader("data/empathetic_dialogues/valid_vader.csv", batch_size, shuffle=True)
-    test_loader = RegressionLoader("data/empathetic_dialogues/test_vader.csv", batch_size, shuffle=True)
+    valid_loader = RegressionLoader("data/empathetic_dialogues/valid_vader.csv", batch_size, shuffle=False)
+    test_loader = RegressionLoader("data/empathetic_dialogues/test_vader.csv", batch_size, shuffle=False)
     return train_loader, valid_loader, test_loader
 
 def configure_transformer_optimizer(model, args):
