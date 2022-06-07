@@ -1,8 +1,29 @@
 # Exemplars-guided Empathetic Response Generation Controlled by the Elements of Human Communication
 
-:zap: :zap: :zap: Codes will be released soon!
-
 :fire::fire::fire: [Read the paper](https://arxiv.org/pdf/2106.11791.pdf)
+
+# Experiments
+
+Unzip the `data.zip` file.
+
+Train the empathy classifier and sentiment regression models using the following commands:
+
+```
+CUDA_VISIBLE_DEVICES=0 python train_empathy_classifier.py --epochs 12 --dim "emo" --lr 1e-5
+CUDA_VISIBLE_DEVICES=0 python train_sentiment_regressor.py --epochs 12 --lr 3e-5
+```
+
+You can downlaod our empathy and sentiment models from the link given [here](saved/README.md). These pre-trained weights are used for training the main LEMPEx model. The model paths are hardcoded [here](https://github.com/declare-lab/exemplary-empathy/blob/main/models.py#L15) and [here](https://github.com/declare-lab/exemplary-empathy/blob/main/models.py#L18) in `models.py`. 
+
+The main LEMPEx model can be trained using:
+
+```
+CUDA_VISIBLE_DEVICES=0 python train.py --epochs 12 --lr 1e-5
+``` 
+
+An example of retrieving exemplars with a non fine-tuned DPR model is provided in `dpr_exempler_retriever.py`. 
+
+We also experiment with exemplars obtained from a DPR model trained on the Empathetic Dialogues and Empathy Mental Health dataset. We follow the instructions in the [original implementation of DPR](https://github.com/facebookresearch/dpr) for training this model. The main LEMPEx model is trained with exemplars from the trained DPR model
 
 # Overview of the Model
 

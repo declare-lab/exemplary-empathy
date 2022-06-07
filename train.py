@@ -71,11 +71,8 @@ def train_or_eval_model(model, dataloader, optimizer=None, train=False, padding=
 
         out, empathy_preds, sentiment_preds = model(context, response, exemplars=exemplars)
         
-        empathy_labels = torch.ones(len(empathy_preds), dtype=torch.long)
-        sentiment_labels = torch.tensor(sentiment)
-        if device=="gpu":
-            empathy_labels = empathy_labels.cuda()
-            sentiment_labels = sentiment_labels.cuda()
+        empathy_labels = torch.ones(len(empathy_preds), dtype=torch.long).cuda()
+        sentiment_labels = torch.tensor(sentiment).cuda()
 
         loss = out.loss
         
@@ -112,7 +109,7 @@ def test_model(model, dataloader, mode):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lr", type=float, default=1e-4, help="Learning rate.")
+    parser.add_argument("--lr", type=float, default=1e-5, help="Learning rate.")
     parser.add_argument("--weight-decay", default=0.0, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--adam-epsilon", default=1e-8, type=float, help="Epsilon for AdamW optimizer.")
     parser.add_argument("--adam-beta1", default=0.9, type=float, help="beta1 for AdamW optimizer.")
@@ -124,7 +121,7 @@ if __name__ == "__main__":
     parser.add_argument("--tgt-len", type=int, default=50, help="Max target length.")
     parser.add_argument("--batch-size", type=int, default=16, help="Batch size.")
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs.")
-    parser.add_argument("--model", default="t5-small", help="Which seq2seq model.")
+    parser.add_argument("--model", default="t5-base", help="Which seq2seq model.")
     parser.add_argument("--add-exemplars", action="store_true", default=True, help="Whether to use add exemplars.")
     parser.add_argument("--max-exemplars", type=int, default=10, help="Number of exemplars")
     parser.add_argument("--decode", default="topk", help="topk or beam search decoding strategy.")
@@ -139,13 +136,11 @@ if __name__ == "__main__":
 
     global max_source_length
     global max_target_length
-    global device
 
     run_ID = int(time.time())
     print(f"run ID: {run_ID}")
 
     max_source_length, max_target_length = args.src_len, args.tgt_len
-    device = "gpu"
     batch_size = args.batch_size
     n_epochs = args.epochs
     model_name = args.model
@@ -157,13 +152,9 @@ if __name__ == "__main__":
     train_loader, valid_loader, test_loader = configure_dataloaders(batch_size)
 
     if args.inference is None:
-        model = ERGMainModel(model_name, max_source_length, max_target_length, strategy, args.add_exemplars, args.max_exemplars)
-        empathy_loss_function = torch.nn.CrossEntropyLoss()
-        sentiment_loss_function = torch.nn.MSELoss()
-        if device=="gpu":
-            model = model.cuda()
-            empathy_loss_function = empathy_loss_function.cuda()
-            sentiment_loss_function = sentiment_loss_function.cuda()
+        model = ERGMainModel(model_name, max_source_length, max_target_length, strategy, args.add_exemplars, args.max_exemplars).cuda()
+        empathy_loss_function = torch.nn.CrossEntropyLoss().cuda()
+        sentiment_loss_function = torch.nn.MSELoss().cuda()
 
         optimizer = configure_optimizer(model, args)
 
@@ -182,10 +173,8 @@ if __name__ == "__main__":
     else:
         run_ID = args.inference
         
-    model = ERGMainModel(model_name, max_source_length, max_target_length, strategy, args.add_exemplars, args.max_exemplars)
+    model = ERGMainModel(model_name, max_source_length, max_target_length, strategy, args.add_exemplars, args.max_exemplars).cuda()
     model.load_state_dict(torch.load(f"saved/{run_ID}/model.pt"))
-    if device=="gpu":
-        model = model.cuda()
     model.eval()
 
     bleu1, bleu2, references, hypothesis, utt_ids = test_model(model, test_loader, mode=args.decode)
