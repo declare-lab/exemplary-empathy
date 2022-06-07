@@ -78,6 +78,9 @@ class EmpatheticDialogues(Dataset):
                         "context": context[:idx+1],
                         "response": curr_utterance,
                         "exemplars": utterance["exemplars_empd_reddit"].split("ææ"),
+                        "empathy1_labels": int(utterance["empathy_labels"]),
+                        "empathy2_labels": int(utterance["empathy2_labels"]),
+                        "empathy3_labels": int(utterance["empathy3_labels"]),
                         "sentiment": utterance["sentiment"]
                         })
                 context.append(curr_utterance)

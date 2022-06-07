@@ -1,30 +1,57 @@
+import json
 import torch
 from torch import nn
 import torch.nn.functional as F
-from transformers import T5Tokenizer, T5ForConditionalGeneration
+from transformers import T5Tokenizer, T5ForConditionalGeneration, T5Config
 from transformers import T5EncoderModel
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 class ERGMainModel(nn.Module):
 
-    def __init__(self, base_model_name, max_source_length, max_target_length, strategy, exemplars=False, max_exemplars=None):
+    def __init__(self, base_model_name, max_source_length, max_target_length, strategy, exemplars=False, max_exemplars=None, fixed=False):
         super().__init__()
         self.erg_model = ERGModel(base_model_name, max_source_length, max_target_length, exemplars, max_exemplars)
         
-        self.empathy_classifier_model = T5EncoderClassifier("base", 2, strategy)
-        self.empathy_classifier_model.load_state_dict(torch.load("saved/empathy/1619600805/model.pt"))
+        self.empathy_classifier_model1 = T5EncoderClassifier("base", 2, strategy)
+        self.empathy_classifier_model1.load_state_dict(torch.load("saved/empathy/1619600015/model.pt"))
+
+        self.empathy_classifier_model2 = T5EncoderClassifier("base", 2, strategy)
+        self.empathy_classifier_model2.load_state_dict(torch.load("saved/empathy/1619600805/model.pt"))
+
+        self.empathy_classifier_model3 = T5EncoderClassifier("base", 2, strategy)
+        self.empathy_classifier_model3.load_state_dict(torch.load("saved/empathy/1619601340/model.pt"))
 
         self.sentiment_regression_model = T5EncoderRegressor("base", strategy)
         self.sentiment_regression_model.load_state_dict(torch.load("saved/sentiment/1620236944/model.pt"))
+
+        self.fixed = fixed
+        if self.fixed:
+            for param in self.empathy_classifier_model1.parameters():
+                param.requires_grad = False
+            for param in self.empathy_classifier_model2.parameters():
+                param.requires_grad = False
+            for param in self.empathy_classifier_model3.parameters():
+                param.requires_grad = False
+            for param in self.sentiment_regression_model.parameters():
+                param.requires_grad = False
 
     def forward(self, context, response, exemplars, padding=True, ignore_pad_token_for_loss=True):
         output, tokenized_response = self.erg_model(context, response, exemplars, padding, ignore_pad_token_for_loss)
         logits = output["logits"]
         response_mask = tokenized_response["attention_mask"]
         merged_context = [" ".join(conv) for conv in context]
-        empathy_preds = self.empathy_classifier_model.output_from_logits(merged_context, logits, response_mask)
+
+        if self.fixed:
+            self.empathy_classifier_model1.eval()
+            self.empathy_classifier_model2.eval()
+            self.empathy_classifier_model3.eval()
+            self.sentiment_regression_model.eval()
+
+        empathy1_preds = self.empathy_classifier_model1.output_from_logits(merged_context, logits, response_mask)
+        empathy2_preds = self.empathy_classifier_model2.output_from_logits(merged_context, logits, response_mask)
+        empathy3_preds = self.empathy_classifier_model3.output_from_logits(merged_context, logits, response_mask)
         sentiment_preds = self.sentiment_regression_model.output_from_logits(logits, response_mask)
-        return output, empathy_preds, sentiment_preds
+        return output, empathy1_preds, empathy2_preds, empathy3_preds, sentiment_preds
 
 class ERGModel(nn.Module):
 
@@ -34,7 +61,16 @@ class ERGModel(nn.Module):
         self.max_source_length, self.max_target_length = max_source_length, max_target_length
         assert "t5" in base_model_name
         self.tokenizer = T5Tokenizer.from_pretrained(base_model_name)
-        self.base_model = T5ForConditionalGeneration.from_pretrained(base_model_name)
+        
+        # self.base_model = T5ForConditionalGeneration.from_pretrained(base_model_name)
+
+        with open("t5-config/" + base_model_name + ".json", "r") as f:
+            self.base_model = T5ForConditionalGeneration(T5Config(**json.load(f)))
+        model_weights = self.base_model.state_dict()
+        for key in model_weights:
+            if len(model_weights[key].shape)>=2:
+                model_weights[key] = 2*torch.rand(model_weights[key].size()) - 1
+
         self.speaker_embedding = nn.Embedding(3, self.base_model.encoder.embed_tokens.embedding_dim,
                     padding_idx=0)
         self.speaker_embedding.weight.requires_grad = True
@@ -43,6 +79,8 @@ class ERGModel(nn.Module):
             self.exemplar_model = AutoModelForSeq2SeqLM.from_pretrained("Vamsi/T5_Paraphrase_Paws")
             self.transform_to_t5_decoder = nn.Linear(self.base_model.encoder.embed_tokens.embedding_dim + self.exemplar_model.encoder.embed_tokens.embedding_dim, self.base_model.encoder.embed_tokens.embedding_dim)
             self.max_exemplars = 999 if max_exemplars is None else max_exemplars
+            for param in self.exemplar_model.parameters():
+                param.requires_grad = False
 
     def _get_speaker_mask(self, speaker_span_lens, mask_length):
         speaker_mask = []
@@ -110,6 +148,7 @@ class ERGModel(nn.Module):
     def forward(self, context, response, exemplars=None, padding=True, ignore_pad_token_for_loss=True):
         # assert exemplars is None or (hasattr(self, "exemplar_tokenizer") and hasattr(self, "exemplar_model"))
         inputs, labels = self._preprocess(context, response, padding, ignore_pad_token_for_loss)
+        self.exemplar_model.eval()
         inputs_embeds = self.base_model.encoder.embed_tokens(inputs["input_ids"]) + self.speaker_embedding(inputs["speaker_mask"])
         if not (hasattr(self, "exemplar_tokenizer") and hasattr(self, "exemplar_model")):
             out = self.base_model(
@@ -190,7 +229,7 @@ class ERGModel(nn.Module):
                 with torch.no_grad():
                     generated = self.base_model.generate(
                                                input_ids=inputs["input_ids"],
-                                               encoder_outputs=[decoder_input],
+                                               encoder_outputs=encoder_output,
                                                attention_mask=inputs["attention_mask"],
                                                max_length=20,
                                                num_beams=8,
@@ -244,7 +283,7 @@ class T5EncoderClassifier(nn.Module):
         output -> (b, num_labels)
         '''
         # encode context #
-        max_len = 512
+        max_len = 768
         batch = self.tokenizer(context, max_length=max_len, padding=True, truncation=True, return_tensors="pt")
         context_ids = batch["input_ids"].cuda()
         context_mask = batch["attention_mask"].cuda()
