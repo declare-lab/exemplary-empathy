@@ -15,10 +15,10 @@ CUDA_VISIBLE_DEVICES=0 python train_sentiment_regressor.py --epochs 12 --lr 3e-5
 
 You can downlaod our empathy and sentiment models from the link given [here](saved/README.md). These pre-trained weights are used for training the main LEMPEx model. The model paths are hardcoded [here](https://github.com/declare-lab/exemplary-empathy/blob/main/models.py#L15) and [here](https://github.com/declare-lab/exemplary-empathy/blob/main/models.py#L18) in `models.py`. 
 
-The main LEMPEx model can be trained using:
+The LEMPEx model with only emotional presence as empathetic loss can be trained using:
 
 ```
-CUDA_VISIBLE_DEVICES=0 python train.py --epochs 12 --lr 1e-5
+CUDA_VISIBLE_DEVICES=0 python train_baseline.py --epochs 12 --lr 1e-5
 ``` 
 
 An example of retrieving exemplars with a non fine-tuned DPR model is provided in `dpr_exempler_retriever.py`. Use the following command to run this script:
