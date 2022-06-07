@@ -21,9 +21,15 @@ The main LEMPEx model can be trained using:
 CUDA_VISIBLE_DEVICES=0 python train.py --epochs 12 --lr 1e-5
 ``` 
 
-An example of retrieving exemplars with a non fine-tuned DPR model is provided in `dpr_exempler_retriever.py`. 
+An example of retrieving exemplars with a non fine-tuned DPR model is provided in `dpr_exempler_retriever.py`. Use the following command to run this script:
 
-We also experiment with exemplars obtained from a DPR model trained on the Empathetic Dialogues and Empathy Mental Health dataset. We follow the instructions in the [original implementation of DPR](https://github.com/facebookresearch/dpr) for training this model. The main LEMPEx model is trained with exemplars from the trained DPR model
+```
+CUDA_VISIBLE_DEVICES=0 python dpr_exempler_retriever.py
+```
+
+The script uses the orignal Empathetic Dialogues dataset and saves the corresponding files with exemplars in the `data/empathetic_dialogues/original/` directory.
+
+We also experiment with exemplars obtained from a DPR model trained on the Empathetic Dialogues and Empathy Mental Health dataset. We follow the instructions in the [original implementation of DPR](https://github.com/facebookresearch/dpr) for training this model. The main LEMPEx model is trained with exemplars from the trained DPR model.
 
 # Overview of the Model
 
