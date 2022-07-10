@@ -65,5 +65,5 @@ not always semantically similar to the references, although they are stylistical
 
 # Citation
 
-Majumder, Navonil, Deepanway Ghosal, Devamanyu Hazarika, Alexander Gelbukh, Rada Mihalcea and Soujanya Poria. “Exemplars-guided Empathetic Response Generation Controlled by the Elements of Human Communication.” ArXiv abs/2106.11791 (2021).
+Majumder, Navonil, Deepanway Ghosal, Devamanyu Hazarika, Alexander Gelbukh, Rada Mihalcea and Soujanya Poria. “Exemplars-guided Empathetic Response Generation Controlled by the Elements of Human Communication.” IEEE Access (2022).
 
