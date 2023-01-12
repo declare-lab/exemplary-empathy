@@ -14,7 +14,7 @@ from models import ERGModel, ERGMainModel
 
 def configure_dataloaders(batch_size):
     "Prepare dataloaders"
-    train_loader = MainDataLoader("data/empathetic_dialogues/valid_dpr.csv", batch_size, shuffle=True)
+    train_loader = MainDataLoader("data/empathetic_dialogues/train_dpr.csv", batch_size, shuffle=True)
     valid_loader = MainDataLoader("data/empathetic_dialogues/valid_dpr.csv", batch_size, shuffle=False)
     test_loader = MainDataLoader("data/empathetic_dialogues/test_dpr.csv", batch_size, shuffle=False)
     return train_loader, valid_loader, test_loader
