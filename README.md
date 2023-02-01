@@ -30,7 +30,7 @@ CUDA_VISIBLE_DEVICES=0 python train_t5.py --epochs 15 --lr 1e-4
 CUDA_VISIBLE_DEVICES=0 python train_glove_t5.py --epochs 50 --lr 1e-4 --add-exemplars "glove-t5"
 ``` 
 
-The code for fine-tuning the DPR model is provided in the `DPR/` directory. You can follow the instraunctions in `DPR/` directory to fine-tune a DPR model on the Empathetic Dialogues and/or Empathy Mental Health Dataset. Then you can use the fine-tuned model path to retrieve the exemplars using:
+The code for fine-tuning the DPR model is provided in the `DPR/` directory. You can follow the instructions in `DPR/` directory to fine-tune a DPR model on the Empathetic Dialogues and/or Empathy Mental Health Dataset. Then you can use the fine-tuned model path to retrieve the exemplars using:
 
 ```
 CUDA_VISIBLE_DEVICES=0 python dpr_exempler_retriever.py --path DPR/outputs/yyyy-mm-dd/aa-bb-cc/saved/empd/dpr_biencoder.0
