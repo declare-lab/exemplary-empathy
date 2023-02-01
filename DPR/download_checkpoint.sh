@@ -1,0 +1,1 @@
+python dpr/data/download_data.py --resource checkpoint.retriever.single.nq.bert-base-encoder

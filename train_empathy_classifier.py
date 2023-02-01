@@ -8,6 +8,7 @@ from tqdm import tqdm
 import torch
 import torch.optim as optim
 from models import T5EncoderClassifier
+from glove_models import GloVeT5EncoderClassifier
 from dataloader import ClassificationLoader
 from transformers.optimization import AdamW, get_scheduler
 from transformers.trainer_pt_utils import get_parameter_names
@@ -97,7 +98,7 @@ def train_or_eval_model(model, dataloader, optimizer=None, train=False):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--lr", type=float, default=1e-6, help="Learning rate for transformers.")
+    parser.add_argument("--lr", type=float, default=1e-5, help="Learning rate for transformers.")
     parser.add_argument("--wd", default=0.0, type=float, help="Weight decay for transformers.")
     parser.add_argument("--adam-epsilon", default=1e-8, type=float, help="Epsilon for AdamW optimizer.")
     parser.add_argument("--adam-beta1", default=0.9, type=float, help="beta1 for AdamW optimizer.")
@@ -109,6 +110,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=8, help="Batch size.")
     parser.add_argument("--epochs", type=int, default=6, help="Number of epochs.")
     parser.add_argument("--size", default="base", help="Which model size for T5: base or large")
+    parser.add_argument("--model", default="t5", help="Which model t5 or glove-t5")
     
     args = parser.parse_args()
     print(args)
@@ -130,7 +132,11 @@ if __name__ == "__main__":
     run_ID = int(time.time())
     print ("run id:", run_ID)
     
-    model = T5EncoderClassifier(size).cuda()
+    if args.model == "t5":
+        model = T5EncoderClassifier(size).cuda()
+    elif args.model == "glove-t5":
+        model = GloVeT5EncoderClassifier(size).cuda()
+    
     loss_function = torch.nn.CrossEntropyLoss().cuda()
     optimizer = configure_transformer_optimizer(model, args)
     
@@ -157,10 +163,9 @@ if __name__ == "__main__":
     lf.write("\n\n")
     lf.close()
     
-    print ("Best valid acc: {}, fscore: {}".format(valid_acc, valid_fscore))
+    print ("Best valid acc: {}, fscore: {}".format(best_acc, best_score))
     
-    content = [str(valid_acc), str(valid_fscore), "empathy " + dimension, str(run_ID), str(args)]
+    content = [str(best_acc), str(best_score), "empathy " + dimension, str(run_ID), str(args)]
     with open("results/results.txt", "a") as f:
         f.write("\t".join(content) + "\n")
         
-   

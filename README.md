@@ -6,32 +6,37 @@
 
 Unzip the `data.zip` file.
 
-Train the empathy classifier and sentiment regression models using the following commands:
+Train the T5 and T5-GloVe empathy classifier and sentiment regression models using the following commands:
 
 ```
-CUDA_VISIBLE_DEVICES=0 python train_empathy_classifier.py --epochs 12 --dim "emo" --lr 1e-5
-CUDA_VISIBLE_DEVICES=0 python train_empathy_classifier.py --epochs 12 --dim "exp" --lr 1e-5
-CUDA_VISIBLE_DEVICES=0 python train_empathy_classifier.py --epochs 12 --dim "int" --lr 1e-5
-CUDA_VISIBLE_DEVICES=0 python train_sentiment_regressor.py --epochs 12 --lr 3e-5
+## T5 Models ##
+CUDA_VISIBLE_DEVICES=0 python train_empathy_classifier.py --epochs 12 --model "t5" --lr 1e-5 --dim ["emo"|"exp"|"int"]
+CUDA_VISIBLE_DEVICES=0 python train_sentiment_regressor.py --epochs 12 --model "t5" --lr 3e-5
+
+## T5-GloVe Models ##
+CUDA_VISIBLE_DEVICES=0 python train_empathy_classifier.py --epochs 15 --model "glove-t5" --lr 2e-5 --dim ["emo"|"exp"|"int"]
+CUDA_VISIBLE_DEVICES=0 python train_sentiment_regressor.py --epochs 15 --model "glove-t5" --lr 2e-5
 ```
 
-You can downlaod our empathy and sentiment models from the link given [here](saved/README.md). These pre-trained weights are used for training the main LEMPEx model. The model paths are hardcoded in `ERGMainModel` in `models.py`. 
+You can downlaod our empathy and sentiment models from the link given [here](saved/README.md). These pre-trained weights are used for training the main empathetic response generator models. The model paths are hardcoded in `ERGMainModel` in `models.py` and `ERGGloVeMainModel` in `glove_models.py`. 
 
-The main LEMPEx model can be trained using:
+The main T5 and the T5-GloVe emapthetic response generator models can be trained using:
 
 ```
-CUDA_VISIBLE_DEVICES=0 python train.py --epochs 12 --lr 1e-4
+## T5 Empathatic Response Generator Model ##
+CUDA_VISIBLE_DEVICES=0 python train_t5.py --epochs 15 --lr 1e-4
+
+## T5-GloVe Empathatic Response Generator Model ##
+CUDA_VISIBLE_DEVICES=0 python train_glove_t5.py --epochs 50 --lr 1e-4 --add-exemplars "glove-t5"
 ``` 
 
-An example of retrieving exemplars with a non fine-tuned DPR model is provided in `dpr_exempler_retriever.py`. Use the following command to run this script:
+The code for fine-tuning the DPR model is provided in the `DPR/` directory. You can follow the instraunctions in `DPR/` directory to fine-tune a DPR model on the Empathetic Dialogues and/or Empathy Mental Health Dataset. Then you can use the fine-tuned model path to retrieve the exemplars using:
 
 ```
-CUDA_VISIBLE_DEVICES=0 python dpr_exempler_retriever.py
+CUDA_VISIBLE_DEVICES=0 python dpr_exempler_retriever.py --path DPR/outputs/yyyy-mm-dd/aa-bb-cc/saved/empd/dpr_biencoder.0
 ```
 
-The script uses the orignal Empathetic Dialogues dataset and saves the corresponding files with exemplars in the `data/empathetic_dialogues/original/` directory.
-
-We also experiment with exemplars obtained from a DPR model trained on the Empathetic Dialogues and Empathy Mental Health dataset. We follow the instructions in the [original implementation of DPR](https://github.com/facebookresearch/dpr) for training this model. The main LEMPEx model is trained with exemplars from the trained DPR model.
+If you do not pass a `--path` then the non fine-tuned DPR model will be used for retrieval. We have provided the fine-tuned DPR retrieved examples in the `*_dpr.csv` files in the `data/empathetic_dialogues/` directory.
 
 # Overview of the Model
 

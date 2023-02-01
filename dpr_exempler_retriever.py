@@ -1,6 +1,9 @@
+import argparse
+import numpy as np
+import pandas as pd
 from tqdm import tqdm
+
 import torch
-import numpy as np, pandas as pd
 import faiss.contrib.torch_utils
 from transformers import DPRContextEncoder, DPRContextEncoderTokenizer
 from transformers import DPRQuestionEncoder, DPRQuestionEncoderTokenizer
@@ -8,7 +11,7 @@ from transformers import DPRQuestionEncoder, DPRQuestionEncoderTokenizer
 def preprocess(text):
     return text.replace("_comma_", ",")
 
-def load_df(split):
+def load_empathetic_dialogues(split):
     data = pd.read_csv("data/empathetic_dialogues/original/" + split + ".csv", quoting=3).drop(columns=["junk"])
     data["utterance"] = data["utterance"].apply(lambda x: preprocess(x))
     history = []
@@ -32,7 +35,7 @@ def embeddings_from_sentences(tokenizer, model, sentences):
     return torch.cat(embeddings)
 
 def compute_exemplers(query_df, query_tensor):
-    k = 2048
+    k = 2047
     D, I = gpu_index_flat.search(query_tensor, k)
     exemplers = list(train["utterance"])
     df_exemplers, df_exemplers_indices = [], []
@@ -62,23 +65,49 @@ def compute_exemplers(query_df, query_tensor):
 
 
 if __name__ == "__main__":
-
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--path", default="", help="Fine-tuned DPR model path. Will use non fine-tuned DPR if not provided.")
+    
+    args = parser.parse_args()
+    path = args.path
+    
     global train
     global gpu_index_flat
 
     # Load data in pandas
-    test = load_df("test")
-    valid = load_df("valid")
-    train = load_df("train")
+    test = load_empathetic_dialogues("test")
+    valid = load_empathetic_dialogues("valid")
+    train = load_empathetic_dialogues("train")
 
     # Load DPR models
-    print ("Loading Models.")
     ctx_model = DPRContextEncoder.from_pretrained("facebook/dpr-ctx_encoder-single-nq-base").cuda()
     qs_model = DPRQuestionEncoder.from_pretrained("facebook/dpr-question_encoder-single-nq-base").cuda()
     ctx_model.eval(); qs_model.eval()
 
     ctx_tokenizer = DPRContextEncoderTokenizer.from_pretrained("facebook/dpr-ctx_encoder-single-nq-base")
     qs_tokenizer = DPRQuestionEncoderTokenizer.from_pretrained("facebook/dpr-question_encoder-single-nq-base")
+    
+    if args.path:
+        weights = torch.load(path)["model_dict"]
+        ctx_model_state_dict = ctx_model.state_dict()
+        qs_model_state_dict = qs_model.state_dict()
+
+        for key in ctx_model_state_dict:
+            if "weight" in key or "bias" in key:
+                new_key = key.replace("ctx_encoder.bert_model", "ctx_model")
+                ctx_model_state_dict[key] = weights[new_key]
+
+        for key in qs_model_state_dict:
+            if "weight" in key or "bias" in key:
+                new_key = key.replace("question_encoder.bert_model", "question_model")
+                qs_model_state_dict[key] = weights[new_key]
+                
+        ctx_model.load_state_dict(ctx_model_state_dict)
+        qs_model.load_state_dict(qs_model_state_dict)     
+        print ("Loaded fine-tuned DPR model.")
+    else:
+        print ("Loaded non fine-tuned DPR model.")
 
     # Compute DPR encodings: train utterances as context; and train, val, test dialogue history as query
     print ("Computing embeddings.")
@@ -102,8 +131,15 @@ if __name__ == "__main__":
     train_dpr = compute_exemplers(train, train_query)
 
     # Save
-    test_dpr.to_csv("data/empathetic_dialogues/original/test_dpr.csv")
-    valid_dpr.to_csv("data/empathetic_dialogues/original/valid_dpr.csv")
-    train_dpr.to_csv("data/empathetic_dialogues/original/train_dpr.csv")
+    if args.path == "":
+        test_dpr.to_csv("data/empathetic_dialogues/test_dpr_without_fine_tuning.csv")
+        valid_dpr.to_csv("data/empathetic_dialogues/valid_dpr_without_fine_tuning.csv")
+        train_dpr.to_csv("data/empathetic_dialogues/train_dpr_without_fine_tuning.csv")
+    else:
+        # The train_dpr, valid_dpr, test_dpr csv files in data/empathetic dailogues contain exemplars from our fine-tuned DPR models.
+        # Executing the script could overwrite the provided dpr files so the filenames are kept different.
+        test_dpr.to_csv("data/empathetic_dialogues/test_dpr_trained.csv")
+        valid_dpr.to_csv("data/empathetic_dialogues/valid_dpr_trained.csv")
+        train_dpr.to_csv("data/empathetic_dialogues/train_dpr_trained.csv")
+        
     print ("Done.")
-

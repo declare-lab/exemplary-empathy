@@ -8,6 +8,7 @@ from tqdm import tqdm
 import torch
 import torch.optim as optim
 from models import T5EncoderRegressor
+from glove_models import GloVeT5EncoderRegressor
 from dataloader import RegressionLoader
 from transformers.optimization import AdamW, get_scheduler
 from transformers.trainer_pt_utils import get_parameter_names
@@ -98,6 +99,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=8, help="Batch size.")
     parser.add_argument("--epochs", type=int, default=6, help="Number of epochs.")
     parser.add_argument("--size", default="base", help="Which model size for T5: base or large")
+    parser.add_argument("--model", default="t5", help="Which model t5 or glv-t5")
     
     args = parser.parse_args()
     print(args)
@@ -112,7 +114,11 @@ if __name__ == "__main__":
     run_ID = int(time.time())
     print ("run id:", run_ID)
     
-    model = T5EncoderRegressor(size).cuda()
+    if args.model == "t5":
+        model = T5EncoderRegressor(size).cuda()
+    elif args.model == "glove-t5":
+        model = GloVeT5EncoderRegressor(size).cuda()
+    
     loss_function = torch.nn.MSELoss().cuda()
     optimizer = configure_transformer_optimizer(model, args)
     
@@ -146,4 +152,3 @@ if __name__ == "__main__":
     with open("results/results.txt", "a") as f:
         f.write("\t".join(content) + "\n")
         
-   

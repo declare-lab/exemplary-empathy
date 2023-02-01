@@ -5,4 +5,5 @@ scikit_learn==1.1.1
 six==1.15.0
 torch==1.11.0
 tqdm==4.49.0
-transformers==4.19.2
+transformers==4.24.0
+faiss-gpu==1.7.3

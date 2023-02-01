@@ -1,0 +1,16 @@
+wget
+numpy
+regex
+filelock
+packaging
+jsonlines
+PyYAML
+spacy
+importlib_resources
+tqdm>=4.27
+faiss-cpu>=1.6.1
+torch==1.7.0
+transformers==3.0.0
+hydra-core>=1.0.0
+omegaconf>=2.0.1
+antlr4-python3-runtime==4.9.0

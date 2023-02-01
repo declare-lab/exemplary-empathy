@@ -1,0 +1,1 @@
+Training data for the DPR models will be stored in this directory if the `../../prepare_dpr_data.py` script is executed.

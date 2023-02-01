@@ -1,0 +1,53 @@
+# @package _group_
+
+nq_train:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.nq-train
+
+nq_train_hn1:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.nq-adv-hn-train
+
+nq_dev:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.nq-dev
+
+trivia_train:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.trivia-train
+
+trivia_dev:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.trivia-dev
+
+squad1_train:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.squad1-train
+
+squad1_dev:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: data.retriever.squad1-dev
+  
+empd_train:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: ../../../dpr/data/empd-train.json
+
+empd_valid:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: ../../../dpr/data/empd-valid.json
+
+reddit_train:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: ../../../dpr/data/reddit-train.json
+
+reddit_valid:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: ../../../dpr/data/reddit-valid.json
+  
+empd_reddit_train:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: ../../../dpr/data/empd-reddit-train.json
+
+empd_reddit_valid:
+  _target_: dpr.data.biencoder_data.JsonQADataset
+  file: ../../../dpr/data/empd-reddit-valid.json

@@ -4,16 +4,30 @@ from __future__ import print_function
 
 import six
 from six.moves import map
-
+import nltk
 from nlgeval.pycocoevalcap.bleu.bleu import Bleu
 from nlgeval.pycocoevalcap.cider.cider import Cider
 from nlgeval.pycocoevalcap.meteor.meteor import Meteor
 from nlgeval.pycocoevalcap.rouge.rouge import Rouge
 
-
 # str/unicode stripping in Python 2 and 3 instead of `str.strip`.
 def _strip(s):
     return s.strip()
+
+
+def compute_distinct(preds):
+    response_ugm, response_bgm = set([]), set([])
+    response_len = sum([len(p) for p in preds])  
+
+    for sentence in preds:
+        for unigram in sentence:
+            response_ugm.add(unigram)
+        for bigram in list(nltk.bigrams(sentence)):  
+            response_bgm.add(bigram)
+    response_len_average = response_len/len(preds)
+    distinctOne = round(len(response_ugm)/response_len_average, 2)
+    distinctTwo = round(len(response_bgm)/response_len_average, 2)
+    return distinctOne, distinctTwo
 
 
 def compute_metrics(hypothesis, references, no_overlap=False, no_skipthoughts=False, no_glove=False):
@@ -40,10 +54,10 @@ def compute_metrics(hypothesis, references, no_overlap=False, no_skipthoughts=Fa
             score, scores = scorer.compute_score(refs, hyps)
             if isinstance(method, list):
                 for sc, scs, m in zip(score, scores, method):
-                    print("%s: %0.6f" % (m, sc))
+                    # print("%s: %0.6f" % (m, sc))
                     ret_scores[m] = sc
             else:
-                print("%s: %0.6f" % (method, score))
+                # print("%s: %0.6f" % (method, score))
                 ret_scores[method] = score
             if isinstance(scorer, Meteor):
                 scorer.close()
@@ -61,7 +75,7 @@ def compute_metrics(hypothesis, references, no_overlap=False, no_skipthoughts=Fa
         vector_refs = map(lambda refl: encoder.encode([r.strip() for r in refl], verbose=False), ref_list_T)
         cosine_similarity = list(map(lambda refv: cosine_similarity(refv, vector_hyps).diagonal(), vector_refs))
         cosine_similarity = np.max(cosine_similarity, axis=0).mean()
-        print("SkipThoughtsCosineSimilarity: %0.6f" % (cosine_similarity))
+        # print("SkipThoughtsCosineSimilarity: %0.6f" % (cosine_similarity))
         ret_scores['SkipThoughtCS'] = cosine_similarity
         del model
 
@@ -73,7 +87,7 @@ def compute_metrics(hypothesis, references, no_overlap=False, no_skipthoughts=Fa
         ref_list_T = np.array(ref_list).T.tolist()
         glove_refs = map(lambda refl: [r.strip() for r in refl], ref_list_T)
         scores = eval_emb_metrics(glove_hyps, glove_refs)
-        print(scores)
+        # print(scores)
         scores = scores.split('\n')
         for score in scores:
             name, value = score.split(':')
@@ -97,10 +111,10 @@ def compute_bleu(ref_list, hyp_list, no_overlap=False):
             score, scores = scorer.compute_score(refs, hyps)
             if isinstance(method, list):
                 for sc, scs, m in zip(score, scores, method):
-                    print("%s: %0.6f" % (m, sc))
+                    # print("%s: %0.6f" % (m, sc))
                     ret_scores[m] = sc
             else:
-                print("%s: %0.6f" % (method, score))
+                # print("%s: %0.6f" % (method, score))
                 ret_scores[method] = score
             if isinstance(scorer, Meteor):
                 scorer.close()

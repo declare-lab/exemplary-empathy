@@ -117,8 +117,8 @@ class ERGModel(nn.Module):
 
         inputs = self._tokenize_input(context, max_length=self.max_source_length, padding=padding, truncation=True)
         # Setup the tokenizer for targets
-        with self.tokenizer.as_target_tokenizer():
-            labels = self.tokenizer(response, max_length=self.max_target_length, padding=padding, truncation=True)
+        # with self.tokenizer.as_target_tokenizer():
+        labels = self.tokenizer(text_target=response, max_length=self.max_target_length, padding=padding, truncation=True, return_tensors="pt")
 
         # If we are padding here, replace all tokenizer.pad_token_id in the labels by -100 when we want to ignore
         # padding in the loss.
@@ -126,7 +126,8 @@ class ERGModel(nn.Module):
             labels["input_ids"] = torch.tensor([
                 [(l if l != self.tokenizer.pad_token_id else -100) for l in label] for label in labels["input_ids"]
             ]).to(self.speaker_embedding.weight.device)
-
+            
+        labels["attention_mask"] = labels["attention_mask"].to(self.speaker_embedding.weight.device)
         return inputs, labels
 
     def _exemplar_mean_pool_representation(self, exemplars):
@@ -260,7 +261,7 @@ class T5EncoderClassifier(nn.Module):
         max_len = 768
         data = [[x, y] for x, y in zip(context, response)]
         batch = self.tokenizer(data, max_length=max_len, padding=True, truncation=True, return_tensors="pt")
-        outputs = self.model(input_ids=batch["input_ids"].cuda(), attention_mask=batch["attention_mask"].cuda())
+        outputs = self.model(input_ids=batch["input_ids"].to(self.model.device), attention_mask=batch["attention_mask"].to(self.model.device))
         sequence_output = outputs["last_hidden_state"][:, 0, :]
         logits = self.classifier(sequence_output)        
         return logits
@@ -285,8 +286,8 @@ class T5EncoderClassifier(nn.Module):
         # encode context #
         max_len = 768
         batch = self.tokenizer(context, max_length=max_len, padding=True, truncation=True, return_tensors="pt")
-        context_ids = batch["input_ids"].cuda()
-        context_mask = batch["attention_mask"].cuda()
+        context_ids = batch["input_ids"].to(self.model.device)
+        context_mask = batch["attention_mask"].to(self.model.device)
         context_embeddings = self.model.encoder.embed_tokens(context_ids)
         
         # encode response #
@@ -296,7 +297,7 @@ class T5EncoderClassifier(nn.Module):
         
         # concatenate #
         merged_embeddings = torch.cat([context_embeddings, response_embeddings], 1)
-        merged_mask = torch.cat([context_mask, torch.tensor(response_mask).cuda()], 1)        
+        merged_mask = torch.cat([context_mask, response_mask], 1)        
         outputs = self.model(inputs_embeds=merged_embeddings, attention_mask=merged_mask)
         sequence_output = outputs["last_hidden_state"][:, 0, :]
         logits = self.classifier(sequence_output)
@@ -319,7 +320,7 @@ class T5EncoderRegressor(nn.Module):
     def forward(self, response):
         max_len = 512
         batch = self.tokenizer(response, max_length=max_len, padding=True, truncation=True, return_tensors="pt")
-        outputs = self.model(input_ids=batch["input_ids"].cuda(), attention_mask=batch["attention_mask"].cuda())        
+        outputs = self.model(input_ids=batch["input_ids"].to(self.model.device), attention_mask=batch["attention_mask"].to(self.model.device))        
         sequence_output = outputs["last_hidden_state"][:, 0, :]
         scores = torch.tanh(self.scorer(sequence_output)).flatten()        
         return scores
@@ -344,7 +345,7 @@ class T5EncoderRegressor(nn.Module):
         decoded_probabilities = self.convert_to_probabilities(decoded_logits)
         embedding_weights = self.model.encoder.embed_tokens.weight
         soft_embeddings = torch.einsum("blv, vd->bld", decoded_probabilities, embedding_weights)
-        outputs = self.model(inputs_embeds=soft_embeddings, attention_mask=torch.tensor(attention_mask).cuda())
+        outputs = self.model(inputs_embeds=soft_embeddings, attention_mask=attention_mask)
         sequence_output = outputs["last_hidden_state"][:, 0, :]
         scores = torch.tanh(self.scorer(sequence_output)).flatten()
         return scores
