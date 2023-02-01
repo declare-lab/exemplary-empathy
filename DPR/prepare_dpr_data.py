@@ -97,9 +97,9 @@ valid = load_empathetic_dialogues("valid")
 train_dpr = prepare_dpr_empathetic_dialogues(train)
 valid_dpr = prepare_dpr_empathetic_dialogues(valid)
 
-with open("dpr/new_data/empd_train.json", "w") as f:
+with open("dpr/new_data/empd-train.json", "w") as f:
     json.dump(train_dpr, f, indent=4, sort_keys=True)
-with open("dpr/new_data/empd_valid.json", "w") as f:
+with open("dpr/new_data/empd-valid.json", "w") as f:
     json.dump(valid_dpr, f, indent=4, sort_keys=True)
     
 ## Reddit Portion of Empathy Mental Health ##
